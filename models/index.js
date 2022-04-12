@@ -12,8 +12,16 @@ const bookshelf = require('../bookshelf')
 // plural form
 const Product = bookshelf.model('Product',{
     tableName:'products',
+    // for belongs to:
+    // function name is that of the model, singular form, in lower case
     category:function(){
         return this.belongsTo('Category')
+    },
+    // for M:N
+    // the name of the function
+    // is that of the Model that it is related to, in lower case and plural
+    tags:function(){
+        return this.belongsToMany('Tag');
     }
 })
 
@@ -27,6 +35,13 @@ const Category = bookshelf.model('Category',{
     tableName:'categories'
 })
 
+const Tag = bookshelf.model('Tag', {
+    'tableName':'tags',
+    products:function(){
+        return this.belongsToMany('Product')
+    }
+})
+
 module.exports = {
-    Product, Brand, Category
+    Product, Brand, Category, Tag
 }
