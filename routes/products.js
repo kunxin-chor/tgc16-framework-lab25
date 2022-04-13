@@ -83,7 +83,7 @@ router.post('/create', async(req,res)=>{
             product.set('cost', form.data.cost);
             product.set('description', form.data.description);
             product.set('category_id', form.data.category_id);
-            req.flash("success_messages", "Product has been created successfully!")
+         
             await product.save();
 
 
@@ -101,7 +101,7 @@ router.post('/create', async(req,res)=>{
             // we can use req.flash()
             // req.flash() allows us to add a new flash message
             // to the current client's session
-         
+            req.flash("success_messages", "Product has been created successfully!")
             res.redirect('/products');
         },
         'error': async(form)=>{

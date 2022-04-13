@@ -34,9 +34,6 @@ app.use(function(req,res,next){
             // or if there is no middleware,to the intended route function
 })
 
-// IMPORT IN THE ROUTES
-const landingRoutes = require('./routes/landing');
-const productRoutes = require('./routes/products');
 
 // setup sessions
 app.use(session({
@@ -57,6 +54,12 @@ app.use(function(req,res,next){
     next();    
 })
 
+
+// IMPORT IN THE ROUTES
+const landingRoutes = require('./routes/landing');
+const productRoutes = require('./routes/products');
+const userRoutes = require('./routes/users');
+
 async function main(){
     app.get('/', function(req,res){
                 res.redirect('/landing');
@@ -64,6 +67,8 @@ async function main(){
 
     app.use('/landing', landingRoutes);
     app.use('/products', productRoutes);
+    app.use('/users', userRoutes);
+
 }
 main();
 
