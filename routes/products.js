@@ -14,7 +14,7 @@ async function getProductById(productId){
         'id': productId
     }).fetch({
         'require': true, // will cause an error if not found
-        'withRelated':['category']
+        'withRelated':['category', 'tags']  // load in the associated category and tags
     })
     return product;
 
@@ -39,9 +39,9 @@ router.get('/', async (req,res)=>{
     // The NAME of the MODEL always refer
     // to the entire table
     let products = await Product.collection().fetch({
-        withRelated:['category']
+        withRelated:['category', 'tags']
     });
-    
+    console.log(products.toJSON()[0].tags);
     res.render('products/index',{
         'products':products.toJSON() // convert the results to JSON
     })
@@ -124,9 +124,11 @@ router.get('/:id/update', async(req,res)=>{
     // get all the existing tags
     // we use the .related function to access the relationship
     // .fetch will fetch all the tags related to the producgt
-    let selectedTags = (await product.related('tags').fetch()).toJSON();
-    let selectedTagIDs = selectedTags.map( tag => tag.id);
-    form.fields.tags.value = selectedTagIDs;
+    // let selectedTags = (await product.related('tags').fetch()).toJSON();
+    // let selectedTagIDs = selectedTags.map( tag => tag.id);
+
+    let selectedTags = await product.related('tags').pluck('id');
+    form.fields.tags.value = selectedTags;
 
     res.render('products/update', {
         'form': form.toHTML(bootstrapField),
@@ -143,8 +145,28 @@ router.post('/:id/update', async (req,res)=>{
     const form = createProductForm();
     form.handle(req, {
         'success': async (form) => {
-            product.set(form.data);
+
+            // extract out form.data.tags into the tags variable
+            // all the other keys/vaues from form.data will go into productData variable as an object
+            let { tags, ...productData } = form.data;
+
+            product.set(productData);
             product.save();
+
+            let selectedTagIDs = tags.split(',');
+
+            // get all the existing tags 
+            let existingTags = await product.related('tags').pluck('id');
+
+            // remove all the tags that are not selected anymore
+            let toRemove = existingTags.filter( id => selectedTagIDs.includes(id) === false);
+
+            await product.tags().detach(toRemove); // detach will take in an array of ids
+                                                   // those ids will be removed from the relationship
+
+            // add in all the new tags
+            await product.tags().attach(selectedTagIDs);
+
             res.redirect('/products');
         },
         'error': async(form) => {
