@@ -41,7 +41,7 @@ router.get('/', async (req,res)=>{
     let products = await Product.collection().fetch({
         withRelated:['category', 'tags']
     });
-    console.log(products.toJSON()[0].tags);
+
     res.render('products/index',{
         'products':products.toJSON() // convert the results to JSON
     })
@@ -83,6 +83,7 @@ router.post('/create', async(req,res)=>{
             product.set('cost', form.data.cost);
             product.set('description', form.data.description);
             product.set('category_id', form.data.category_id);
+            req.flash("success_messages", "Product has been created successfully!")
             await product.save();
 
 
@@ -93,9 +94,14 @@ router.post('/create', async(req,res)=>{
                 // is because attach function takes in an array of ids
 
                 // add new tags to the M:n tags relationship
-                await product.tags().attach([tags.split(',')]);
+                await product.tags().attach(tags.split(','));
             }
 
+            // when we run app.use(flash()), /
+            // we can use req.flash()
+            // req.flash() allows us to add a new flash message
+            // to the current client's session
+         
             res.redirect('/products');
         },
         'error': async(form)=>{

@@ -3,6 +3,10 @@ const hbs = require('hbs')
 const wax = require('wax-on');
 require('dotenv').config();
 
+const session = require('express-session');
+const flash = require('connect-flash');
+const FileStore = require('session-file-store')(session);
+
 // create express app
 const app = express();
 
@@ -33,6 +37,25 @@ app.use(function(req,res,next){
 // IMPORT IN THE ROUTES
 const landingRoutes = require('./routes/landing');
 const productRoutes = require('./routes/products');
+
+// setup sessions
+app.use(session({
+    'store': new FileStore(),
+    'secret':'keyboard cat',
+    'resave': false,
+    'saveUninitialized': true
+}))
+
+// setup flash message
+app.use(flash());
+
+// display in the hbs file
+app.use(function(req,res,next){
+    // transfer any success messages stored in the session
+    // to the variables in hbs files
+    res.locals.success_messages = req.flash("success_messages");
+    next();    
+})
 
 async function main(){
     app.get('/', function(req,res){
