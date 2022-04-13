@@ -27,6 +27,13 @@ async function getAllCategories() {
     return allCategories;
 }
 
+async function getAllTags() {
+    const allTags = await Tag.fetchAll().map( tag => {
+        return [ tag.get('id'), tag.get('name')]
+    })
+    return allTags;
+}
+
 router.get('/', async (req,res)=>{
     // fetch all the products
     // The NAME of the MODEL always refer
@@ -46,9 +53,7 @@ router.get('/create', async (req,res)=>{
         return [ category.get('id'), category.get('name')]
     });
 
-    const allTags = await Tag.fetchAll().map( tag => {
-        return [ tag.get('id'), tag.get('name')]
-    })
+    const allTags = await getAllTags();
 
     const form = createProductForm(allCategories, allTags);
     res.render('products/create',{
@@ -59,7 +64,8 @@ router.get('/create', async (req,res)=>{
 router.post('/create', async(req,res)=>{
     
     const allCategories = await getAllCategories();
-    const form = createProductForm(allCategories);
+    const allTags = await getAllTags();
+    const form = createProductForm(allCategories, allTags);
 
     form.handle(req, {
         'success': async(form)=>{
@@ -79,14 +85,15 @@ router.post('/create', async(req,res)=>{
             product.set('category_id', form.data.category_id);
             await product.save();
 
-            console.log(form.data.tags);
 
             // we can create the M:N relationship after the product is created
             let tags = form.data.tags;
             if (tags) {
                 // the reason we split the tags by comma
                 // is because attach function takes in an array of ids
-                await product.tags().attach(tags.split(','));
+
+                // add new tags to the M:n tags relationship
+                await product.tags().attach([tags.split(',')]);
             }
 
             res.redirect('/products');
@@ -103,15 +110,23 @@ router.get('/:id/update', async(req,res)=>{
 
     const product = await getProductById(req.params.id);
     const allCategories = await getAllCategories();
+    const allTags = await getAllTags();
 
     // create the product form
-    const form = createProductForm(allCategories);
+    const form = createProductForm(allCategories, allTags);
 
     // fill in the values of each input in the form
     form.fields.name.value = product.get('name');
     form.fields.cost.value = product.get('cost');
     form.fields.description.value = product.get('description');
     form.fields.category_id.value = product.get('category_id');
+
+    // get all the existing tags
+    // we use the .related function to access the relationship
+    // .fetch will fetch all the tags related to the producgt
+    let selectedTags = (await product.related('tags').fetch()).toJSON();
+    let selectedTagIDs = selectedTags.map( tag => tag.id);
+    form.fields.tags.value = selectedTagIDs;
 
     res.render('products/update', {
         'form': form.toHTML(bootstrapField),
