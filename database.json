@@ -3,6 +3,6 @@
         "driver":"mysql",
         "user":"foo",
         "password":"bar",
-        "database":"organic"
+        "database":"organic2"
     }
 }

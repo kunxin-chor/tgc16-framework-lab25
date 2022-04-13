@@ -1,7 +1,7 @@
 const express = require('express');
 
 // import in the Product model
-const {Product, Brand, Category} = require('../models')
+const {Product, Brand, Category, Tag} = require('../models')
 const {bootstrapField, createProductForm} = require('../forms')
 
 // create the new router
@@ -46,7 +46,11 @@ router.get('/create', async (req,res)=>{
         return [ category.get('id'), category.get('name')]
     });
 
-    const form = createProductForm(allCategories);
+    const allTags = await Tag.fetchAll().map( tag => {
+        return [ tag.get('id'), tag.get('name')]
+    })
+
+    const form = createProductForm(allCategories, allTags);
     res.render('products/create',{
         'form':  form.toHTML(bootstrapField)
     })
@@ -74,6 +78,17 @@ router.post('/create', async(req,res)=>{
             product.set('description', form.data.description);
             product.set('category_id', form.data.category_id);
             await product.save();
+
+            console.log(form.data.tags);
+
+            // we can create the M:N relationship after the product is created
+            let tags = form.data.tags;
+            if (tags) {
+                // the reason we split the tags by comma
+                // is because attach function takes in an array of ids
+                await product.tags().attach(tags.split(','));
+            }
+
             res.redirect('/products');
         },
         'error': async(form)=>{
