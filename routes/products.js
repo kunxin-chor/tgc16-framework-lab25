@@ -3,6 +3,7 @@ const express = require('express');
 // import in the Product model
 const {Product, Brand, Category, Tag} = require('../models')
 const {bootstrapField, createProductForm} = require('../forms')
+const {checkIfAuthenticated} = require('../middlewares')
 
 // create the new router
 const router = express.Router();
@@ -47,7 +48,8 @@ router.get('/', async (req,res)=>{
     })
 })
 
-router.get('/create', async (req,res)=>{
+router.get('/create', checkIfAuthenticated, async (req,res)=>{
+
 
     const allCategories = await Category.fetchAll().map( category => {
         return [ category.get('id'), category.get('name')]
@@ -61,7 +63,7 @@ router.get('/create', async (req,res)=>{
     })
 })
 
-router.post('/create', async(req,res)=>{
+router.post('/create', checkIfAuthenticated, async(req,res)=>{
     
     const allCategories = await getAllCategories();
     const allTags = await getAllTags();

@@ -1,5 +1,12 @@
 const express = require('express');
 const router = express.Router();
+const crypto = require('crypto');
+
+const getHashedPassword = (password) => {
+    const sha256 = crypto.createHash('sha256');
+    const hash = sha256.update(password).digest('base64');
+    return hash;
+}
 
 // import in the user model
 const { User } = require('../models');
@@ -20,7 +27,7 @@ router.post('/register', async (req,res)=>{
         'success':async function(form){
             const user = new User({
                 'username': form.data.username,
-                'password': form.data.password,
+                'password': getHashedPassword(form.data.password),
                 'email': form.data.email
             });
             await user.save();
@@ -55,11 +62,11 @@ router.post('/login', (req,res)=>{
             })
 
             if (!user) {
-                req.flash('error_messages', "Sorry the email is not found")
-                req.redirect('/users/login')
+                req.flash('error_messages', "Sorry your login details is wrong")
+                res.redirect('/users/login')
             } else {
                     // 2. if the user exists, then check if the password is correct
-                if (user.get('password') === form.data.password) {
+                if (user.get('password') === getHashedPassword(form.data.password)) {
                     
                     // store the user info in the session
                     req.session.user = {
@@ -72,8 +79,8 @@ router.post('/login', (req,res)=>{
                     res.redirect('/landing');
 
                 } else {
-                    req.flash('error_messages', "Sorry your password is incorrect")
-                    req.redirect('/users/login')
+                    req.flash('error_messages', "Sorry yourlogin details is incorrect")
+                    res.redirect('/users/login')
                 }
             }
         },
@@ -83,6 +90,29 @@ router.post('/login', (req,res)=>{
             })
         }
     })
+})
+
+router.get('/profile', async (req,res)=>{
+    if (!req.session.user) {
+        req.flash('error_messages', "Please login to see the page");
+        res.redirect('/users/login');
+    } else {
+        let user = await User.where({
+            'id': req.session.user.id
+        }).fetch({
+            'required': true
+        })
+
+        res.render('users/profile',{
+            'user': user.toJSON()
+        })
+    }
+})
+
+router.get('/logout', (req,res) => {
+    req.session.user = null;
+    req.flash('success_messages', "Goodbye and see you again");
+    res.redirect('/users/login');
 })
 
 module.exports = router;

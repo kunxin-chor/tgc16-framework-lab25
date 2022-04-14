@@ -7,6 +7,10 @@ const session = require('express-session');
 const flash = require('connect-flash');
 const FileStore = require('session-file-store')(session);
 
+// require in csurf
+const csrf = require('csurf');
+
+
 // create express app
 const app = express();
 
@@ -51,7 +55,36 @@ app.use(function(req,res,next){
     // transfer any success messages stored in the session
     // to the variables in hbs files
     res.locals.success_messages = req.flash("success_messages");
+    res.locals.error_messages = req.flash('error_messages');
     next();    
+})
+
+app.use(csrf());
+
+// middleware to share the csrf token with all hbs files
+app.use(function(req,res,next){
+    // the req.csrfToken() generates a new token
+    // and save its to the current session
+    res.locals.csrfToken = req.csrfToken();
+    next();
+})
+
+// middleware to handle csrf errors
+// if a middleware function takes 4 arguments
+// the first argument is error
+app.use(function(err, req,res,next){
+    if (err && err.code == "EBADCSRFTOKEN") {
+        req.flash('error_messages', "The form has expired. Please try again");
+        res.redirect('back'); // go back one page
+    } else {
+        next();
+    }
+})
+
+// share the details of the logged in user with all routes
+app.use(function(req,res,next){
+    res.locals.user = req.session.user;
+    next();
 })
 
 
