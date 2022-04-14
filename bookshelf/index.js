@@ -6,7 +6,7 @@ const knex = require('knex')({
     connection:{
         user:'foo',
         password:'bar',
-        database:'organic2'
+        database:'organic'
     }
 })
 
