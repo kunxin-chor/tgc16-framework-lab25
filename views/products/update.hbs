@@ -2,10 +2,71 @@
 
 {{#block "content"}}
 <form method="POST">
+    <input type="hidden" name="_csrf" value="{{csrfToken}}"/>
     {{{form}}}
+    {{#if product.image_url}}
+        <img src="{{product.image_url}}" id="uploaded_image"/>
+    {{else}}
+        <img src="" id="uploaded_image" style="display:none"/>
+    {{/if}}
+    <div>
+        <a href="#" class="btn btn-primary mt-3" id="upload_widget">Upload</a>
+    </div>
     <input type="submit" class="btn btn-primary mt-3"/>
 </form>
 
+{{/block}}
+
+{{#block "js"}}
+<!-- axios -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.26.1/axios.min.js" integrity="sha512-bPh3uwgU5qEMipS/VOmRqynnMXGGSRv+72H/N260MQeXZIK4PG48401Bsby9Nq5P5fz7hy5UGNmC/W1Z51h2GQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<!-- cloudinary upload widget -->
+<script src="https://widget.cloudinary.com/v2.0/global/all.js" type="text/javascript"></script>
+<script>
+    const cloudinaryName = '{{cloudinaryName}}';
+    const cloudinaryApiKey = '{{cloudinaryApiKey}}';
+    const cloudinaryPreset = '{{cloudinaryPreset}}';
+
+    async function generateSignature(callback, params_to_sign) {
+        let response = await axios.get('/cloudinary/sign',{
+            'params':{
+                params_to_sign
+            }
+        });
+        // response.data contains the signature
+        callback(response.data);
+    }
+
+    // create the cloudinary widget
+    const config = {
+        cloudName: cloudinaryName,
+        apiKey: cloudinaryApiKey,
+        uploadPreset: cloudinaryPreset,
+        uploadSignature: generateSignature
+    };
+    const myWidget = cloudinary.createUploadWidget(config, (error, result)=>{
+        // this function is called by the cloudinary widget when the upload is done
+        // (or aborted due to error)
+        // error will contain any errors from cloudinary
+        // result will contain information about the upladed image if it's success
+        if (error) {
+            console.log(error);
+        };
+        if (!error && result && result.event === 'success') {
+            console.log(result);
+            document.querySelector('#id_image_url').value = result.info.url;
+            document.querySelector("#uploaded_image").src = result.info.url;
+            document.querySelector("#uploaded_image").style.display = 'inline';
+        }
+    
+    })
+
+    document.querySelector("#upload_widget").addEventListener('click', function(){
+        myWidget.open();
+    })
+
+</script>
 {{/block}}
 
 {{/extends}}
