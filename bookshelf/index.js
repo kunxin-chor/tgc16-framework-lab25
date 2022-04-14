@@ -4,9 +4,10 @@
 const knex = require('knex')({
     client: 'mysql',  // which db tech are we using
     connection:{
-        user:'foo',
-        password:'bar',
-        database:'organic'
+        user:'ckx_foobar',
+        password:'rotiprata123',
+        database:'ckx_organic',
+        host:"db4free.net"
     }
 })
 
