@@ -4,7 +4,9 @@ const validators = forms.validators;
 const widgets = forms.widgets;
 
 var bootstrapField = function (name, object) {
-    if (!Array.isArray(object.widget.classes)) { object.widget.classes = []; }
+    if (!Array.isArray(object.widget.classes)) {
+        object.widget.classes = [];
+    }
 
     if (object.widget.classes.indexOf('form-control') === -1) {
         object.widget.classes.push('form-control');
@@ -31,13 +33,13 @@ const createProductForm = (categories, tags) => {
         // <input type="text" name="name"/>
         'name': fields.string({
             'required': true,
-            'errorAfterField':true,
+            'errorAfterField': true,
         }),
         // <input type="text" name="cost"/>
         'cost': fields.string({
             'required': true,
             'errorAfterField': true,
-            'validators':[validators.integer(), validators.min(0)]
+            'validators': [validators.integer(), validators.min(0)]
         }),
         // <input type="text" name="description"/>
         'description': fields.string({
@@ -45,17 +47,17 @@ const createProductForm = (categories, tags) => {
             'errorAfterField': true
         }),
         'category_id': fields.string({
-            'label':'Category',
+            'label': 'Category',
             'required': true,
             'errorAfterField': true,
-            'widget':widgets.select(), // use the dropdowns elect
-            'choices':categories
+            'widget': widgets.select(), // use the dropdowns elect
+            'choices': categories
         }),
         'tags': fields.string({
             'required': true,
             'errorAfterField': true,
             'widget': widgets.multipleSelect(),
-            'choices':tags // [ [1, 'Snack'], [2, 'Healthy'] ]
+            'choices': tags // [ [1, 'Snack'], [2, 'Healthy'] ]
         }),
         'image_url': fields.string({
             'widget': widgets.hidden()
@@ -70,30 +72,70 @@ const createRegistrationForm = () => {
             'errorAfterField': true
         }),
         'email': fields.string({
-            'required':true,
-            'errorAfterField': true
-        }),
-        'password':fields.password({
             'required': true,
             'errorAfterField': true
         }),
-        'confirm_password':fields.password({
+        'password': fields.password({
+            'required': true,
+            'errorAfterField': true
+        }),
+        'confirm_password': fields.password({
             'required': true,
             'errorAfterField': true,
-            'validators': [ validators.matchField('password')]
+            'validators': [validators.matchField('password')]
         })
     })
 }
 
-const createLoginForm = () => { return forms.create({
-    'email': fields.string({
-        'required': true,
-        'errorAfterField': true,
-    }),
-    'password': fields.password({
-        'required': true,
-        'errorAfterField': true
+const createLoginForm = () => {
+    return forms.create({
+        'email': fields.string({
+            'required': true,
+            'errorAfterField': true,
+        }),
+        'password': fields.password({
+            'required': true,
+            'errorAfterField': true
+        })
     })
-})}
+}
 
-module.exports = { bootstrapField, createProductForm, createRegistrationForm, createLoginForm}
+const createSearchForm = function (categories, tags) {
+    return forms.create({
+        'name': fields.string({
+            required: false,
+            errorAfterField: true
+        }),
+        'min_cost': fields.string({
+            required: false,
+            errorAfterField: true,
+            validators: [validators.integer(), validators.min(0)]
+        }),
+        'max_cost': fields.string({
+            required: false,
+            errorAfterField: true,
+            validators: [validators.integer(), validators.min(0)]
+        }),
+        'category_id': fields.string({
+            label: 'Category',
+            required: false,
+            errorAfterField: true,
+            widget: widgets.select(),
+            choices: categories
+        }),
+        'tags': fields.string({
+            required: false,
+            errorAfterField: true,
+            widget: widgets.multipleSelect(),
+            choices: tags
+        })
+    })
+}
+
+module.exports = {
+    bootstrapField,
+    createProductForm,
+    createRegistrationForm,
+    createLoginForm,
+    createSearchForm
+}
