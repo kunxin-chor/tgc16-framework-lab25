@@ -16,35 +16,12 @@ const {
     checkIfAuthenticated
 } = require('../middlewares')
 
+
+const productDataLayer = require('../dal/products')
 // create the new router
 const router = express.Router();
 
-async function getProductById(productId) {
-    // eqv of
-    // select * from products where id = ${productId}
-    const product = await Product.where({
-        'id': productId
-    }).fetch({
-        'require': true, // will cause an error if not found
-        'withRelated': ['category', 'tags'] // load in the associated category and tags
-    })
-    return product;
 
-}
-
-async function getAllCategories() {
-    const allCategories = await Category.fetchAll().map(category => {
-        return [category.get('id'), category.get('name')]
-    });
-    return allCategories;
-}
-
-async function getAllTags() {
-    const allTags = await Tag.fetchAll().map(tag => {
-        return [tag.get('id'), tag.get('name')]
-    })
-    return allTags;
-}
 
 router.get('/', async (req, res) => {
     // OLD CODE BEFORE WE HAVE THE SEARCH ENGINE
@@ -56,11 +33,11 @@ router.get('/', async (req, res) => {
     // });
     // END OLD CODE
 
-    const allCategories = await getAllCategories();
+    const allCategories = await productDataLayer.getAllCategories();
     allCategories.unshift(["", "All"])
 
 
-    const allTags = await getAllTags();
+    const allTags = await productDataLayer.getAllTags();
 
     const searchForm = createSearchForm(allCategories, allTags);
 
@@ -139,11 +116,9 @@ router.get('/', async (req, res) => {
 router.get('/create', checkIfAuthenticated, async (req, res) => {
 
 
-    const allCategories = await Category.fetchAll().map(category => {
-        return [category.get('id'), category.get('name')]
-    });
+    const allCategories = await productDataLayer.getAllCategories()
 
-    const allTags = await getAllTags();
+    const allTags = await productDataLayer.getAllTags();
 
     const form = createProductForm(allCategories, allTags);
     res.render('products/create', {
@@ -156,8 +131,8 @@ router.get('/create', checkIfAuthenticated, async (req, res) => {
 
 router.post('/create', checkIfAuthenticated, async (req, res) => {
 
-    const allCategories = await getAllCategories();
-    const allTags = await getAllTags();
+    const allCategories = await productDataLayer.getAllCategories();
+    const allTags = await productDataLayer.getAllTags();
     const form = createProductForm(allCategories, allTags);
 
     form.handle(req, {
@@ -211,9 +186,9 @@ router.post('/create', checkIfAuthenticated, async (req, res) => {
 
 router.get('/:id/update', async (req, res) => {
 
-    const product = await getProductById(req.params.id);
-    const allCategories = await getAllCategories();
-    const allTags = await getAllTags();
+    const product = await productDataLayer.getProductById(req.params.id);
+    const allCategories = await productDataLayer.getAllCategories();
+    const allTags = await productDataLayer.getAllTags();
 
     // create the product form
     const form = createProductForm(allCategories, allTags);
@@ -245,7 +220,7 @@ router.get('/:id/update', async (req, res) => {
 
 router.post('/:id/update', async (req, res) => {
     // 1. fetch the product that we want to update
-    const product = await getProductById(req.params.id);
+    const product = await productDataLayer.getProductById(req.params.id);
 
 
     // 2. handle the form
@@ -288,14 +263,14 @@ router.post('/:id/update', async (req, res) => {
 })
 
 router.get('/:id/delete', async (req, res) => {
-    const product = await getProductById(req.params.id);
+    const product = await productDataLayer.getProductById(req.params.id);
     res.render('products/delete', {
         product: product.toJSON()
     })
 })
 
 router.post('/:id/delete', async (req, res) => {
-    const product = await getProductById(req.params.id);
+    const product = await productDataLayer.getProductById(req.params.id);
     await product.destroy();
     res.redirect('/products');
 })
